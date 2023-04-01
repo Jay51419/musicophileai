@@ -1,34 +1,28 @@
-import { useAtom } from "jotai";
 import { type NextPage } from "next";
 import { useState } from "react";
-import { genreAtom, languageAtom, moodAtom, tempoAtom } from "~/atoms";
-import GenreDropdown from "~/components/genre-component";
-import LanguageDropdown from "~/components/language-dropdown";
-import MoodDropdown from "~/components/mood-dropdown";
 import Spinner from "~/components/spinner";
-import TempoSlider from "~/components/tempo-slider";
 import { api } from "~/utils/api";
 
 const Recommendation: NextPage = () => {
-    const [recommendations, setReccommendations] = useState<(string | undefined)[] | null>()
-    const [language] = useAtom(languageAtom)
-    const [mood] = useAtom(moodAtom)
-    const [genre] = useAtom(genreAtom)
-    const [tempo] = useAtom(tempoAtom)
+    const [recommendations, setReccommendations] = useState<{
+        name: string;
+        artist: string | undefined;
+    }[] | null>()
+    const [prompt, setPrompt] = useState("Old hindi classic lata mangeskar")
     const getReccomendation = api.openai.getReccomendation.useMutation({
-        onSuccess(data, variables, context) {
+        onSuccess(data, _, __) {
             setReccommendations(data)
         },
     });
     return (
         <div className="bg-slate-900 w-full h-screen flex justify-center " >
             <div className="h-full w-full flex flex-col justify-start m-10 max-w-lg" >
-                <LanguageDropdown />
-                <GenreDropdown />
-                <MoodDropdown />
-                <TempoSlider />
+                <input type="text" value={prompt} onChange={e => setPrompt(e.target.value)} />
                 <br />
-                <button onClick={() => getReccomendation.mutate({ language, genre, mood, tempo })} className="bg-[#0072C6] px-4 py-2 rounded-full text-white font-semibold" >Submit</button>
+                <button onClick={() => {
+                    if (prompt == "") return;
+                    getReccomendation.mutate({ prompt })
+                }} className="bg-[#0072C6] px-4 py-2 rounded-full text-white font-semibold" >Submit</button>
 
                 <h1 className="text-white" >Recommendation</h1>
 
@@ -38,7 +32,7 @@ const Recommendation: NextPage = () => {
 
                             recommendations?.map((e, i) => {
                                 return <li key={i} className="text-white" >
-                                    {e}
+                                    {e.name}
                                 </li>
                             })
                     }
