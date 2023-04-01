@@ -14,9 +14,7 @@ export const Genres = [
 export const Tempos = [
     "Grave",
     "Largo",
-    "Larghetto",
     "Adagio",
-    "Adagietto",
     "Andante",
     "Moderato",
     "Allegro",
@@ -27,10 +25,10 @@ export const Tempos = [
 
 
 export const Languages = [
+    "Hindi",
     "English",
     "Spanish",
     "Korean",
-    "Hindi",
     "Arabic",
     "Portuguese",
     "Bengali",
@@ -39,7 +37,7 @@ export const Languages = [
     "French"
 ];
 
-const Moods = [
+export const Moods = [
     "Happy",
     "Sad",
     "Angry",
