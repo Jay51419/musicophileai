@@ -32,7 +32,7 @@ const Recommendation: NextPage = () => {
 
                             recommendations?.map((e, i) => {
                                 return <li key={i} className="text-white" >
-                                    {e.name}
+                                    {e.name} | {e.artist} 
                                 </li>
                             })
                     }

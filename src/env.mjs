@@ -15,9 +15,11 @@ const server = z.object({
 const client = z.object({
   // NEXT_PUBLIC_CLIENTVAR: z.string().min(1),
   OPENAI_API_KEY: z.string().min(1),
-  SPOTIFY_ACCESS_TOKEN: z.string().min(1),
+  SPOTIFY_CLIENT_CODE: z.string().min(1),
   SPOTIFY_CLIENT_ID: z.string().min(1),
   SPOTIFY_CLIENT_SECRET: z.string().min(1),
+  REDIS_HOST: z.string().min(1),
+  REDIS_PASSWORD: z.string().min(1),
 });
 
 /**
@@ -29,9 +31,11 @@ const client = z.object({
 const processEnv = {
   NODE_ENV: process.env.NODE_ENV,
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-  SPOTIFY_ACCESS_TOKEN: process.env.SPOTIFY_ACCESS_TOKEN,
+  SPOTIFY_CLIENT_CODE: process.env.SPOTIFY_CLIENT_CODE,
   SPOTIFY_CLIENT_ID: process.env.SPOTIFY_CLIENT_ID,
   SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET,
+  REDIS_HOST: process.env.REDIS_HOST,
+  REDIS_PASSWORD: process.env.REDIS_PASSWORD,
   // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
 };
 
