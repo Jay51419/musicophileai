@@ -3,12 +3,18 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 import { Configuration, OpenAIApi } from "openai";
+import { env } from "~/env.mjs";
+import { google, youtube_v3 } from "googleapis";
 
+// const youtube = google.youtube({
+//     version: 'v3',
+//     auth: env.GOOGLE_API_KEY
+// });
 const configuration = new Configuration({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: env.OPENAI_API_KEY,
 });
 const openai = new OpenAIApi(configuration);
-const capitalize = (str: String) => {
+const capitalize = (str: string) => {
     return str.charAt(0).toUpperCase() + str.substring(1);
 }
 export const openAiRouter = createTRPCRouter({
@@ -19,7 +25,7 @@ export const openAiRouter = createTRPCRouter({
             mood: z.string().default("happy"),
             tempo: z.string().default("Moderato "),
         }))
-        .query(async ({ input }) => {
+        .mutation(async ({ input }) => {
             const prompt = `suggest ${input.language} ${input.genre} music  with ${input.mood} mood and ${input.tempo} tempo`
             const response = await openai.createCompletion({
                 model: "text-davinci-003",
@@ -31,13 +37,25 @@ export const openAiRouter = createTRPCRouter({
             if (response.data) {
                 const musicString = response.data?.choices[0]?.text || ""
                 const musicList: (string | undefined)[] = musicString.split('\n').filter(music => music.trim() !== '').map(el => el.substring(el.indexOf('"') + 1))
+                //     const musicWithYoutubeLinks = musicList.map(music => {
+                //         return youtube.search.list({
+                //             part: ["id", "snippet"],
+                //             q: music,
+                //             maxResults: 1
+
+                //         }).then(res => res.data.items?.[0])
+
+                //     })
+                //     console.table(musicWithYoutubeLinks)
+                //     return musicWithYoutubeLinks
                 return musicList
+
             } else {
                 return null;
 
             }
         }),
-    validateGenre: publicProcedure.input(z.object({ name: z.string().min(1) })).query(async ({ input }) => {
+    validateGenre: publicProcedure.input(z.object({ name: z.string().min(1) })).mutation(async ({ input }) => {
         const response = await openai.createCompletion({
             model: "text-davinci-003",
             prompt: `is ${capitalize(input.name)} a music genre?only yes or no?`,
@@ -48,7 +66,7 @@ export const openAiRouter = createTRPCRouter({
         return text == "Yes" ? true : false
 
     }),
-    validateMood: publicProcedure.input(z.object({ name: z.string().min(1) })).query(async ({ input }) => {
+    validateMood: publicProcedure.input(z.object({ name: z.string().min(1) })).mutation(async ({ input }) => {
         const response = await openai.createCompletion({
             model: "text-davinci-003",
             prompt: `is ${capitalize(input.name)} a mood?only yes or no?`,
