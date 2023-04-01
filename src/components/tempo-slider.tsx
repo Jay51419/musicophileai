@@ -23,7 +23,7 @@ const TempoSlider = () => {
       ];
     return (
         <div>
-            <label className="text-slate-200 text-xl font-semibold">Rhythm : <span>{tempoTranslations[value]}</span> </label>
+            <label className="text-slate-200 text-xl font-semibold">Tempo : <span>{tempoTranslations[value]}</span> </label>
             <input type="range" min="0"
                 max="8" value={value} onChange={onChange} className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"></input>
         </div>)
