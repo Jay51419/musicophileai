@@ -7,6 +7,33 @@ export interface SpotifyTokens {
     expires_in: number;
     refresh_token: string;
 }
+interface SpotifyTrackSearchResult {
+    tracks: {
+        href: string;
+        items: Array<{
+            album: {
+                id: string;
+                name: string;
+                images: Array<{
+                    url: string;
+                }>;
+            };
+            artists: Array<{
+                id: string;
+                name: string;
+            }>;
+            id: string;
+            name: string;
+            preview_url: string;
+            uri: string;
+        }>;
+        limit: number;
+        next: string | null;
+        offset: number;
+        previous: string | null;
+        total: number;
+    };
+}
 
 const CLIENT_ID = env.SPOTIFY_CLIENT_ID;
 const CLIENT_SECRET = env.SPOTIFY_CLIENT_SECRET;
@@ -17,12 +44,6 @@ const SPOTIFY_API = 'https://api.spotify.com/v1';
 
 
 export async function getSpotifyAccessToken(code: string): Promise<SpotifyTokens> {
-    let tokens: SpotifyTokens = {
-        access_token: '',
-        token_type: '',
-        expires_in: 0,
-        refresh_token: ''
-    };
     const response = await axios({
         method: 'POST',
         url: 'https://accounts.spotify.com/api/token',
@@ -32,15 +53,10 @@ export async function getSpotifyAccessToken(code: string): Promise<SpotifyTokens
         },
         data: `grant_type=authorization_code&code=${code}&redirect_uri=${REDIRECT_URI}`
     });
-
-    tokens.access_token = response.data.access_token;
-    tokens.token_type = response.data.token_type;
-    tokens.expires_in = response.data.expires_in;
-    tokens.refresh_token = response.data.refresh_token;
-    return tokens
+    return response.data as SpotifyTokens
 }
 
-export async function searchSpotifyTrack(trackName: string, token: string): Promise<any> {
+export async function searchSpotifyTrack(trackName: string, token: string): Promise<SpotifyTrackSearchResult> {
     const response = await axios({
         method: 'GET',
         url: `${SPOTIFY_API}/search`,
@@ -54,7 +70,7 @@ export async function searchSpotifyTrack(trackName: string, token: string): Prom
         }
     });
 
-    return response.data;
+    return response.data as SpotifyTrackSearchResult;
 }
 
 export const refreshAccessToken = async (refreshToken: string): Promise<SpotifyTokens | null> => {
@@ -69,9 +85,7 @@ export const refreshAccessToken = async (refreshToken: string): Promise<SpotifyT
                 client_secret: env.SPOTIFY_CLIENT_SECRET,
             },
         });
-
-        console.log('New Access Token:', response.data);
-        return response.data;
+        return response.data as SpotifyTokens;
     } catch (error) {
         console.error('Error refreshing access token:', error);
         return null
