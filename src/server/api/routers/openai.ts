@@ -4,7 +4,7 @@ import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 import { Configuration, OpenAIApi } from "openai";
 import { env } from "~/env.mjs";
-
+import axios from 'axios';
 import { createClient } from 'redis';
 import { type Track, getSpotifyAccessToken, refreshAccessToken, searchSpotifyAlbum } from "~/server/helpers/spotify-token";
 
@@ -92,9 +92,9 @@ function convertStringToArrayOfObjects(str: string): Track[] {
         const name = (parts?.[0] || "").replace(/^\d+\.\s*/, '');
         const artist = parts[1] || "";
         const year = parts[2] || "";
-        const market =(parts[3]||"").charAt(0) + (parts[3]||"").charAt(1);
-        const album=parts[4] || "";
-        songs.push({ name, artist, image: "", url: "", market, year,album });
+        const market = (parts[3] || "").charAt(0) + (parts[3] || "").charAt(1);
+        const album = parts[4] || "";
+        songs.push({ name, artist, image: "", url: "", market, year, album });
     }
     return songs;
 }
@@ -106,6 +106,17 @@ function createSpotifyLink(uri: string): string {
 
     return `https://open.spotify.com/${resourceType}/${resourceId}`;
 }
+
+interface DalleApiResponse {
+    data: DalleApiImageData[];
+}
+
+interface DalleApiImageData {
+    url: string;
+    prompt: string;
+    text: string;
+}
+
 export const openAiRouter = createTRPCRouter({
     getReccomendation: publicProcedure
         .input(z.object({
@@ -119,40 +130,15 @@ export const openAiRouter = createTRPCRouter({
                 max_tokens: 200,
                 temperature: 0.7,
             });
-            const token = await getToken()
-            await redisClient.disconnect()
+            // const token = await getToken()
+            // await redisClient.disconnect()
             if (response.data) {
                 const musicString = response.data?.choices[0]?.text || ""
-                const data = convertStringToArrayOfObjects(musicString)
-                if (token) {
-                    const res = data.map(async (d) => {
-                        const query = (`track: ${d.name.replace(/ /g, '%20')}%20artist: ${d.artist?.replace(/ /g, '%20')}%20year: ${d.year.replace(/ /g, '%20')}`)
-                        const res = await searchSpotifyAlbum(query, d.market, token)
-                        console.log(query)
-                        const track: Track = {
-                            name: d.name,
-                            artist: d.artist,
-                            market: d.market,
-                            year: d.year,
-                            album: d.year,
-                            url: createSpotifyLink(res.albums.items[0]?.uri || ""),
-                            image: res.albums.items[0]?.images[0]?.url || ""
-                        }
-                        return track
-                    })
-                    function resolveTracks() {
-                        return Promise.all(res)
-                            .then((resolvedTracks) => {
-                                return resolvedTracks
-                            }).catch(
-                                (_) => {
-                                    return null
-                                }
-                            )
-                    }
-                    return resolveTracks()
-                }
-                return data
+                return convertStringToArrayOfObjects(musicString).map((track) => {
+                    const q =  encodeURIComponent(`${track.name} ${track.artist}`)
+                    const url = (`https://open.spotify.com/search/${q}`)
+                    return { ...track, url }
+                })
             } else {
                 return null;
             }

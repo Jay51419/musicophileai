@@ -13,9 +13,6 @@ const Recommendation: NextPage = () => {
             setShowRefreshButton(false)
             if (data !== null && data !== undefined) {
                 setReccommendations(data)
-                if (data[0]?.url == "") {
-                    setShowRefreshButton(true)
-                }
             } else {
                 setShowRefreshButton(true)
             }
@@ -42,7 +39,6 @@ const Recommendation: NextPage = () => {
 
                             recommendations?.map((e, i) => {
                                 return <li key={i} className="text-white" >
-                                    <img className="h-24 w-24" src={e.image} alt="" />
                                     {
                                         e.name
                                     } | {
