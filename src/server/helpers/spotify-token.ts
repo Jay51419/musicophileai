@@ -7,33 +7,57 @@ export interface SpotifyTokens {
     expires_in: number;
     refresh_token: string;
 }
-interface SpotifyTrackSearchResult {
-    tracks: {
+export interface AlbumSearchResult {
+    albums: {
         href: string;
-        items: Array<{
-            album: {
-                id: string;
-                name: string;
-                images: Array<{
-                    url: string;
-                }>;
-            };
-            artists: Array<{
-                id: string;
-                name: string;
-            }>;
-            id: string;
-            name: string;
-            preview_url: string;
-            uri: string;
-        }>;
         limit: number;
         next: string | null;
         offset: number;
         previous: string | null;
         total: number;
+        items: {
+            album_type: string;
+            total_tracks: number;
+            external_urls: {
+                spotify: string;
+            };
+            href: string;
+            id: string;
+            images: {
+                url: string;
+                height: number;
+                width: number;
+            }[];
+            name: string;
+            release_date: string;
+            release_date_precision: string;
+            type: string;
+            uri: string;
+            album_group: string;
+            artists: {
+                external_urls: {
+                    spotify: string;
+                };
+                href: string;
+                id: string;
+                name: string;
+                type: string;
+                uri: string;
+            }[];
+            is_playable: boolean;
+        }[];
     };
 }
+
+export type Track = {
+    name: string;
+    artist: string;
+    image: string;
+    url: string;
+    year: string;
+    market:string;
+    album:string;
+};
 
 const CLIENT_ID = env.SPOTIFY_CLIENT_ID;
 const CLIENT_SECRET = env.SPOTIFY_CLIENT_SECRET;
@@ -56,7 +80,7 @@ export async function getSpotifyAccessToken(code: string): Promise<SpotifyTokens
     return response.data as SpotifyTokens
 }
 
-export async function searchSpotifyTrack(trackName: string, token: string): Promise<SpotifyTrackSearchResult> {
+export async function searchSpotifyAlbum(query: string,market:string,token: string): Promise<AlbumSearchResult> {
     const response = await axios({
         method: 'GET',
         url: `${SPOTIFY_API}/search`,
@@ -64,13 +88,14 @@ export async function searchSpotifyTrack(trackName: string, token: string): Prom
             Authorization: `Bearer ${token}`
         },
         params: {
-            q: trackName,
-            type: 'track',
-            limit: 1
+            q: query,
+            type: 'album',
+            limit: 1,
+            market: market.trim(),
         }
     });
 
-    return response.data as SpotifyTrackSearchResult;
+    return response.data as AlbumSearchResult;
 }
 
 export const refreshAccessToken = async (refreshToken: string): Promise<SpotifyTokens | null> => {

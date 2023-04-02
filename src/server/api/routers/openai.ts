@@ -6,7 +6,7 @@ import { Configuration, OpenAIApi } from "openai";
 import { env } from "~/env.mjs";
 
 import { createClient } from 'redis';
-import { getSpotifyAccessToken, refreshAccessToken, searchSpotifyTrack } from "~/server/helpers/spotify-token";
+import { type Track, getSpotifyAccessToken, refreshAccessToken, searchSpotifyAlbum } from "~/server/helpers/spotify-token";
 
 const redisClient = createClient({
     username: "default",
@@ -83,27 +83,36 @@ Chal Diye Tum Kahan - Lata Mangeshkar
 
 */
 
-function convertStringToArrayOfObjects(str: string): { name: string; artist: string }[] {
+function convertStringToArrayOfObjects(str: string): Track[] {
     const lines = str.split('\n');
-    const songs: { name: string; artist: string }[] = [];
+    const songs: Track[] = [];
     for (const line of lines) {
         const parts = line.split(' - ');
         if (parts.length < 2) continue;
         const name = (parts?.[0] || "").replace(/^\d+\.\s*/, '');
         const artist = parts[1] || "";
-        songs.push({ name, artist });
+        const year = parts[2] || "";
+        const market =(parts[3]||"").charAt(0) + (parts[3]||"").charAt(1);
+        const album=parts[4] || "";
+        songs.push({ name, artist, image: "", url: "", market, year,album });
     }
     return songs;
 }
 
+function createSpotifyLink(uri: string): string {
+    const uriParts = uri.split(':');
+    const resourceType = uriParts[1] || "";
+    const resourceId = uriParts[2] || "";
 
+    return `https://open.spotify.com/${resourceType}/${resourceId}`;
+}
 export const openAiRouter = createTRPCRouter({
     getReccomendation: publicProcedure
         .input(z.object({
             prompt: z.string(),
         }))
         .mutation(async ({ input }) => {
-            const prompt = `${input.prompt} list 10 songs (songname - artist)`
+            const prompt = `${input.prompt} list 5 songs (number. songname -artist-year- only country initials-album)`
             const response = await openai.createCompletion({
                 model: "text-davinci-003",
                 prompt: prompt,
@@ -111,16 +120,39 @@ export const openAiRouter = createTRPCRouter({
                 temperature: 0.7,
             });
             const token = await getToken()
+            await redisClient.disconnect()
             if (response.data) {
                 const musicString = response.data?.choices[0]?.text || ""
                 const data = convertStringToArrayOfObjects(musicString)
                 if (token) {
-                    // const query = `track:${data[0]?.name.replace(/ /g, '%20')}%20artist:${data[0]?.artist?.replace(/ /g, '%20')}`
-                    //const searchData = await searchSpotifyTrack(query, token)
-                    //console.log(searchData)
-                    return data
+                    const res = data.map(async (d) => {
+                        const query = (`track: ${d.name.replace(/ /g, '%20')}%20artist: ${d.artist?.replace(/ /g, '%20')}%20year: ${d.year.replace(/ /g, '%20')}`)
+                        const res = await searchSpotifyAlbum(query, d.market, token)
+                        console.log(query)
+                        const track: Track = {
+                            name: d.name,
+                            artist: d.artist,
+                            market: d.market,
+                            year: d.year,
+                            album: d.year,
+                            url: createSpotifyLink(res.albums.items[0]?.uri || ""),
+                            image: res.albums.items[0]?.images[0]?.url || ""
+                        }
+                        return track
+                    })
+                    function resolveTracks() {
+                        return Promise.all(res)
+                            .then((resolvedTracks) => {
+                                return resolvedTracks
+                            }).catch(
+                                (_) => {
+                                    return null
+                                }
+                            )
+                    }
+                    return resolveTracks()
                 }
-                return (data)
+                return data
             } else {
                 return null;
             }

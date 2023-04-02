@@ -1,17 +1,24 @@
 import { type NextPage } from "next";
 import { useState } from "react";
 import Spinner from "~/components/spinner";
+import { type Track } from "~/server/helpers/spotify-token";
 import { api } from "~/utils/api";
 
 const Recommendation: NextPage = () => {
-    const [recommendations, setReccommendations] = useState<{
-        name: string;
-        artist: string | undefined;
-    }[] | null>()
+    const [recommendations, setReccommendations] = useState<Track[] | null>()
     const [prompt, setPrompt] = useState("Old hindi classic lata mangeskar")
+    const [showRefreshButton, setShowRefreshButton] = useState(false)
     const getReccomendation = api.openai.getReccomendation.useMutation({
         onSuccess(data, _, __) {
-            setReccommendations(data)
+            setShowRefreshButton(false)
+            if (data !== null && data !== undefined) {
+                setReccommendations(data)
+                if (data[0]?.url == "") {
+                    setShowRefreshButton(true)
+                }
+            } else {
+                setShowRefreshButton(true)
+            }
         },
     });
     return (
@@ -23,7 +30,10 @@ const Recommendation: NextPage = () => {
                     if (prompt == "") return;
                     getReccomendation.mutate({ prompt })
                 }} className="bg-[#0072C6] px-4 py-2 rounded-full text-white font-semibold" >Submit</button>
-
+                {showRefreshButton && <button onClick={() => {
+                    if (prompt == "") return;
+                    getReccomendation.mutate({ prompt })
+                }} className="bg-[#0072C6] px-4 py-2 rounded-full text-white font-semibold" >Refresh</button>}
                 <h1 className="text-white" >Recommendation</h1>
 
                 <ul>
@@ -32,7 +42,12 @@ const Recommendation: NextPage = () => {
 
                             recommendations?.map((e, i) => {
                                 return <li key={i} className="text-white" >
-                                    {e.name} | {e.artist} 
+                                    <img className="h-24 w-24" src={e.image} alt="" />
+                                    {
+                                        e.name
+                                    } | {
+                                        e.artist
+                                    }| <a href={e.url}>Open</a>
                                 </li>
                             })
                     }
