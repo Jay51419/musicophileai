@@ -116,7 +116,7 @@ interface DalleApiImageData {
     prompt: string;
     text: string;
 }
-
+convertStringToArrayOfObjects("")
 export const openAiRouter = createTRPCRouter({
     getReccomendation: publicProcedure
         .input(z.object({
