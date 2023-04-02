@@ -54,6 +54,7 @@ export type Track = {
     artist: string;
     image: string;
     url: string;
+    youtube: string;
     year: string;
     market:string;
     album:string;

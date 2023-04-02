@@ -94,7 +94,7 @@ function convertStringToArrayOfObjects(str: string): Track[] {
         const year = parts[2] || "";
         const market = (parts[3] || "").charAt(0) + (parts[3] || "").charAt(1);
         const album = parts[4] || "";
-        songs.push({ name, artist, image: "", url: "", market, year, album });
+        songs.push({ name, artist, image: "", url: "", market, year, album, youtube: "" });
     }
     return songs;
 }
@@ -135,9 +135,10 @@ export const openAiRouter = createTRPCRouter({
             if (response.data) {
                 const musicString = response.data?.choices[0]?.text || ""
                 return convertStringToArrayOfObjects(musicString).map((track) => {
-                    const q =  encodeURIComponent(`${track.name} ${track.artist}`)
+                    const q = encodeURIComponent(`${track.name} ${track.artist}`)
                     const url = (`https://open.spotify.com/search/${q}`)
-                    return { ...track, url }
+                    const youtube = (`https://www.youtube.com/results?search_query=${track.name.replace(/ /g, "+")}+${track.artist.replace(/ /g, "+")}`)
+                    return { ...track, url, youtube }
                 })
             } else {
                 return null;

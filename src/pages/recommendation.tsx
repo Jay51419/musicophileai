@@ -43,7 +43,7 @@ const Recommendation: NextPage = () => {
                                         e.name
                                     } | {
                                         e.artist
-                                    }| <a href={e.url}>Open</a>
+                                    }| <a target="_blank" href={e.url}>Spotify</a> |  <a target="_blank" href={e.youtube}>Youtube</a>
                                 </li>
                             })
                     }
