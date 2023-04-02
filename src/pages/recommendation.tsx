@@ -36,7 +36,7 @@ const Recommendation: NextPage = () => {
                 <div className="container mx-auto px-6 py-8 flex items-center">
                     <div className="flex items-center">
                         <h1 className="text-5xl font-bold text-[#c7d6ed] drop-shadow-[0_1.4px_1.4px_rgba(75,0,130,1)]   satisfy ">
-                            Musicphileai
+                            Musicophileai
                         </h1>
                     </div>
                 </div>
